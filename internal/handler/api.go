@@ -25,6 +25,16 @@ func RegisterApiHandler(router *chi.Mux) {
 	})
 }
 
+// PostRecognize godoc
+// @Summary Do post recognize
+// @Description get post recognize result
+// @Accept  json
+// @Produce  json
+// @Param Body body segmentInfo true "Set AsrKind to model name you want to use in post recognize"
+// @Success 200 {array} wordalignment
+// @Failure 400
+// @Failure 500
+// @Router /postRecognize [post]
 func (handler apiHandler) postRecognize(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
@@ -53,6 +63,16 @@ func (handler apiHandler) postRecognize(w http.ResponseWriter, r *http.Request) 
 	w.Write(out)
 }
 
+// UploadRecognize godoc
+// @Summary Do upload recognize
+// @Description get upload recognize result
+// @Accept multipart/form-data
+// @Produce  json
+// @Param Form formData uploadInfo true "Upload file via file field"
+// @Success 200 {array} wordalignment
+// @Failure 400
+// @Failure 500
+// @Router /uploadRecognize [post]
 func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(1024 * 1024 * 100)
 	if err != nil {
@@ -114,6 +134,15 @@ func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request
 	w.Write(out)
 }
 
+// Translate godoc
+// @Summary Do translate after post recognize
+// @Description get translate result
+// @Accept  plain
+// @Produce  plain
+// @Param string body string true "string that need to translate"
+// @Success 200 {string} string "return translated string"
+// @Failure 500
+// @Router /translate [post]
 func (handler apiHandler) translate(w http.ResponseWriter, r *http.Request) {
 
 	res, err := http.Post("http://140.109.19.147:5566/api/v1/translate", "application/json", r.Body)

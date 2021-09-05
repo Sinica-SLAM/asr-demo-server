@@ -1,0 +1,118 @@
+basePath: /api
+definitions:
+  handler.segmentInfo:
+    properties:
+      asrKind:
+        type: string
+      id:
+        type: string
+      langKind:
+        type: string
+      length:
+        type: number
+      start:
+        type: number
+    type: object
+  handler.wordalignment:
+    properties:
+      length:
+        type: number
+      start:
+        type: number
+      token:
+        type: string
+      word:
+        type: string
+    type: object
+host: asrvm.iis.sinica.edu.tw:8080
+info:
+  contact:
+    email: wayne900619@gmail.com
+    name: API Support
+  description: This is a API for ASR DEMO.
+  title: ASR DEMO API
+  version: "0.1"
+paths:
+  /postRecognize:
+    post:
+      consumes:
+      - application/json
+      description: get post recognize result
+      parameters:
+      - description: Set AsrKind to model name you want to use in post recognize
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.segmentInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.wordalignment'
+            type: array
+        "400":
+          description: ""
+        "500":
+          description: ""
+      summary: Do post recognize
+  /translate:
+    post:
+      consumes:
+      - text/plain
+      description: get translate result
+      parameters:
+      - description: string that need to translate
+        in: body
+        name: string
+        required: true
+        schema:
+          type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: return translated string
+          schema:
+            type: string
+        "400":
+          description: ""
+        "500":
+          description: ""
+      summary: Do translate after post recognize
+  /uploadRecognize:
+    post:
+      consumes:
+      - multipart/form-data
+      description: get upload recognize result
+      parameters:
+      - in: formData
+        name: asrKind
+        type: string
+      - format: binary
+        in: formData
+        name: file
+        type: string
+      - in: formData
+        name: langKind
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.wordalignment'
+            type: array
+        "400":
+          description: ""
+        "500":
+          description: ""
+      summary: Do upload recognize
+schemes:
+- https
+swagger: "2.0"

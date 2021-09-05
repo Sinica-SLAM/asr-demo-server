@@ -8,5 +8,5 @@ import (
 )
 
 func main() {
-	fx.New(fx.Provide(pkg_chi.NewRouter), fx.Invoke(handler.RegisterStaticHandler, handler.RegisterApiHandler)).Run()
+	fx.New(fx.Provide(pkg_chi.NewRouter), fx.Invoke(handler.RegisterStaticHandler, handler.RegisterApiHandler, handler.RegisterSwaggoHandler)).Run()
 }
