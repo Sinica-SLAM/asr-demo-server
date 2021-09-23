@@ -22,7 +22,7 @@ func NewRouter(lifecycle fx.Lifecycle) (*chi.Mux, error) {
 	lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
 			go func() {
-				if err := server.ListenAndServeTLS("./cert/server.crt", "./cert/server.key"); err != nil && err != http.ErrServerClosed {
+				if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 					panic(err)
 				}
 			}()
