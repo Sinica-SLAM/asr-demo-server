@@ -18,7 +18,7 @@ type apiHandler struct{}
 func RegisterApiHandler(router *chi.Mux) {
 	handler := &apiHandler{}
 
-	router.Route("/api", func(apiRouter chi.Router) {
+	router.Route("/demo", func(apiRouter chi.Router) {
 		apiRouter.Post("/postRecognize", handler.postRecognize)
 		apiRouter.Post("/uploadRecognize", handler.uploadRecognize)
 		apiRouter.Post("/translate", handler.translate)

@@ -21,9 +21,9 @@ import (
 // @BasePath /api
 
 func RegisterSwaggoHandler(router *chi.Mux) {
-	router.Get("/api/swagger", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/api/swagger/index.html", http.StatusMovedPermanently)
+	router.Get("/demo/swagger", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/demo/swagger/index.html", http.StatusMovedPermanently)
 	})
-	router.Get("/api/swagger/*", httpSwagger.WrapHandler)
+	router.Get("/demo/swagger/*", httpSwagger.WrapHandler)
 
 }
