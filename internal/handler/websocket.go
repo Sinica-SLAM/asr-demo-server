@@ -14,6 +14,7 @@ var asrKindPortMap = map[string]int{
 	"tailo_0630":        8889,
 	"tailo_0630_taibun": 8890,
 	"kenkone":           8891,
+	"vgh":               8892,
 }
 
 func RegisterWebsocketHandler(router *chi.Mux) {
