@@ -13,6 +13,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const SCRIPT_PREFIX = `source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;bash /mnt/md0/nfs_share/PKASR/sinica_asr/gstreamer`
+
 type apiHandler struct{}
 
 func RegisterApiHandler(router *chi.Mux) {
@@ -21,7 +23,6 @@ func RegisterApiHandler(router *chi.Mux) {
 	router.Route("/demo", func(apiRouter chi.Router) {
 		apiRouter.Post("/postRecognize", handler.postRecognize)
 		apiRouter.Post("/uploadRecognize", handler.uploadRecognize)
-		apiRouter.Post("/translate", handler.translate)
 	})
 }
 
@@ -47,9 +48,13 @@ func (handler apiHandler) postRecognize(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	audioPath := fmt.Sprintf("/mnt/md0/user_dodohow1011/kaldi-gstreamer-server/tmp/%s.raw", segment.Id)
+	if segment.AsrKind == "formospeech_me_1" {
+		segment.AsrKind = "sa_me_old"
+	}
 
-	command := exec.Command("bash", "-c", fmt.Sprintf("source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;sh /mnt/md0/PKASR/formospeech/gstreamer/run_rec_post.sh %s %s %s %f %f", segment.LangKind, segment.AsrKind, audioPath, segment.Start, segment.Length))
+	audioPath := fmt.Sprintf("/mnt/md0/kaldi-gstreamer-server/tmp/%s.raw", segment.Id)
+
+	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_post.sh %s %s %s %f %f", SCRIPT_PREFIX, segment.LangKind, segment.AsrKind, audioPath, segment.Start, segment.Length))
 
 	out, err := command.CombinedOutput()
 	if err != nil {
@@ -112,7 +117,7 @@ func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request
 
 	io.Copy(file, uploadFile)
 
-	command := exec.Command("bash", "-c", fmt.Sprintf("source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;sh /mnt/md0/PKASR/formospeech/gstreamer/run_rec_upload.sh %s %s %s", langKind, asrKind, fmt.Sprintf("/mnt/md0/user_dodohow1011/asr-demo/files/%s", filename)))
+	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_upload.sh %s %s %s", SCRIPT_PREFIX, langKind, asrKind, fmt.Sprintf("/mnt/md0/asr-demo/files/%s", filename)))
 
 	out, err := command.CombinedOutput()
 	if err != nil {
@@ -134,29 +139,22 @@ func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request
 	w.Write(out)
 }
 
-// Translate godoc
-// @Summary Do translate after post recognize
-// @Description get translate result
-// @Accept  plain
-// @Produce  plain
-// @Param string body string true "string that need to translate"
-// @Success 200 {string} string "return translated string"
-// @Failure 500
-// @Router /translate [post]
-func (handler apiHandler) translate(w http.ResponseWriter, r *http.Request) {
+// func (handler apiHandler) postRecognizeHandler(w http.ResponseWriter, r *http.Request) {
+// 	r.ParseForm()
+// 	r.Form.Get()
 
-	res, err := http.Post("http://140.109.19.147:5566/api/v1/translate", "application/json", r.Body)
-	if err != nil {
-		w.WriteHeader(500)
-		return
-	}
+// 	audioPath := fmt.Sprintf("/mnt/md0/user_dodohow1011/kaldi-gstreamer-server/tmp/%s.raw", segment.Id)
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		w.WriteHeader(500)
-		return
-	}
+// 	command := exec.Command("bash", "-c", fmt.Sprintf("source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;bash /mnt/md0/PKASR/formospeech/gstreamer/run_rec_post.sh %s %s %s %f %f", segment.LangKind, segment.AsrKind, audioPath, segment.Start, segment.Length))
 
-	w.WriteHeader(res.StatusCode)
-	w.Write(body)
-}
+// 	out, err := command.CombinedOutput()
+// 	if err != nil {
+// 		fmt.Printf("%s", err.Error())
+// 		w.WriteHeader(500)
+// 		return
+// 	}
+// 	fmt.Println(string(out))
+
+// 	w.WriteHeader(200)
+// 	w.Write(out)
+// }
