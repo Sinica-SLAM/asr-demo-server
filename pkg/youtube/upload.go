@@ -13,7 +13,7 @@ func (s Service) UploadVideo(title string, file io.Reader) (*youtube.Video, erro
 			Title: title,
 			Tags:  []string{"test"},
 		},
-		Status: &youtube.VideoStatus{PrivacyStatus: "private", MadeForKids: false},
+		Status: &youtube.VideoStatus{PrivacyStatus: "unlisted", MadeForKids: false},
 	}
 
 	response, err := s.youtubeService.Videos.Insert([]string{"snippet", "status"}, video).Media(file, googleapi.ContentType("application/octet-stream")).Do()
