@@ -10,12 +10,10 @@ import (
 )
 
 var asrKindPortMap = map[string]int{
-	"formospeech_me_1":  8888,
-	"tailo_0630":        8889,
-	"tailo_0630_taibun": 8890,
-	"kenkone":           8891,
-	"vgh":               8892,
-	"kenkone_211228":    8893,
+	"sa_me_2.0":         8888,
+	"sa_te_1.0":         8889,
+	"sa_me_2.0+kenkone": 8890,
+	"sa_me_2.0+vgh":     8891,
 }
 
 func RegisterWebsocketHandler(router *chi.Mux) {
