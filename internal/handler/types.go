@@ -8,6 +8,11 @@ type segmentInfo struct {
 	Length   float64 `json:"length"`
 }
 
+type youtubeInfo struct {
+	AsrKind string `json:"asrKind"`
+	Vid     string `json:"vid"`
+}
+
 type uploadInfo struct {
 	LangKind string `form:"langKind"`
 	AsrKind  string `form:"asrKind"`

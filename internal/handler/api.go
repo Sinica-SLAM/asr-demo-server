@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bufio"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
@@ -8,21 +9,31 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+
+	youtube "asr-demo-recognize/pkg/youtube"
 )
 
-const SCRIPT_PREFIX = `source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;bash /mnt/md0/nfs_share/PKASR/sinica_asr/gstreamer`
+const SCRIPT_PREFIX = `source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;bash /mnt/md0/nfs_share/PKASR/sinica_asr/demo`
+const API_SCRIPT_PREFIX = `source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;bash /mnt/md0/nfs_share/PKASR/sinica_asr/api`
 
-type apiHandler struct{}
+type apiHandler struct {
+	youtubeService *youtube.Service
+}
 
-func RegisterApiHandler(router *chi.Mux) {
-	handler := &apiHandler{}
+func RegisterApiHandler(router *chi.Mux, youtubeService *youtube.Service) {
+	handler := &apiHandler{
+		youtubeService: youtubeService,
+	}
 
 	router.Route("/demo", func(apiRouter chi.Router) {
 		apiRouter.Post("/postRecognize", handler.postRecognize)
 		apiRouter.Post("/uploadRecognize", handler.uploadRecognize)
+		apiRouter.Post("/youtubeSrt", handler.youtubeSrt)
 	})
 }
 
@@ -48,17 +59,14 @@ func (handler apiHandler) postRecognize(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if segment.AsrKind == "formospeech_me_1" {
-		segment.AsrKind = "sa_me_old"
-	}
-
 	audioPath := fmt.Sprintf("/mnt/md0/kaldi-gstreamer-server/tmp/%s.raw", segment.Id)
 
 	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_post.sh %s %s %s %f %f", SCRIPT_PREFIX, segment.LangKind, segment.AsrKind, audioPath, segment.Start, segment.Length))
 
 	out, err := command.CombinedOutput()
 	if err != nil {
-		fmt.Printf("%s", err.Error())
+		fmt.Println(err.Error())
+		fmt.Println(string(out))
 		w.WriteHeader(500)
 		return
 	}
@@ -106,6 +114,7 @@ func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request
 	}
 
 	filename := fmt.Sprintf("%x.%s", md5.Sum([]byte(strings.Split(header.Filename, ".")[0])), strings.Split(header.Filename, ".")[1])
+	fmt.Println(filename)
 
 	file, err := os.Create(fmt.Sprintf("files/%s", filename))
 	if err != nil {
@@ -139,22 +148,103 @@ func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request
 	w.Write(out)
 }
 
-// func (handler apiHandler) postRecognizeHandler(w http.ResponseWriter, r *http.Request) {
-// 	r.ParseForm()
-// 	r.Form.Get()
+func (handler apiHandler) youtubeSrt(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
 
-// 	audioPath := fmt.Sprintf("/mnt/md0/user_dodohow1011/kaldi-gstreamer-server/tmp/%s.raw", segment.Id)
+	var info youtubeInfo
 
-// 	command := exec.Command("bash", "-c", fmt.Sprintf("source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;bash /mnt/md0/PKASR/formospeech/gstreamer/run_rec_post.sh %s %s %s %f %f", segment.LangKind, segment.AsrKind, audioPath, segment.Start, segment.Length))
+	err := decoder.Decode(&info)
+	if err != nil {
+		fmt.Printf("%s", err.Error())
+		w.WriteHeader(400)
+		return
+	}
 
-// 	out, err := command.CombinedOutput()
-// 	if err != nil {
-// 		fmt.Printf("%s", err.Error())
-// 		w.WriteHeader(500)
-// 		return
-// 	}
-// 	fmt.Println(string(out))
+	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_youtube.sh %s %s", API_SCRIPT_PREFIX, info.AsrKind, info.Vid))
 
-// 	w.WriteHeader(200)
-// 	w.Write(out)
-// }
+	so, err := command.StdoutPipe()
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(500)
+		return
+	}
+
+	scanner := bufio.NewScanner(so)
+
+	err = command.Start()
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(500)
+		return
+	}
+	unReadFirstLine := true
+	result := ""
+	for scanner.Scan() {
+		if unReadFirstLine {
+			result = scanner.Text()
+			unReadFirstLine = false
+		}
+		fmt.Println(scanner.Text())
+		fmt.Println(scanner.Err())
+	}
+
+	srtPath := ""
+	videoPath := ""
+
+	if splitResult := strings.Split(result, " "); len(splitResult) > 1 {
+		srtPath = splitResult[0]
+		videoPath = splitResult[1]
+	} else {
+		fmt.Println("script wrong output")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	videoFile, err := os.Open(videoPath)
+	if err != nil {
+		fmt.Printf("Error opening %v: %v\n", videoPath, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer videoFile.Close()
+
+	videoRes, err := handler.youtubeService.UploadVideo(path.Base(videoPath), videoFile)
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	srtFile, err := os.Open(srtPath)
+	if err != nil {
+		fmt.Printf("Error opening %v: %v\n", srtFile, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer srtFile.Close()
+
+	_, err = handler.youtubeService.UploadCaptions(videoRes.Id, srtFile)
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = os.RemoveAll(path.Dir(path.Dir(srtPath)))
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(500)
+		return
+	}
+
+	b, err := json.Marshal(map[string]string{"vid": videoRes.Id})
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(500)
+		return
+	}
+
+	time.Sleep(1 * time.Minute)
+
+	w.Write(b)
+}
