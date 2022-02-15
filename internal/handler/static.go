@@ -8,5 +8,4 @@ import (
 
 func RegisterStaticHandler(router *chi.Mux) {
 	router.Handle("/*", http.FileServer(http.Dir("./dist")))
-
 }

@@ -7,6 +7,8 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi/v5"
+	httpmiddleware "github.com/slok/go-http-metrics/middleware"
+	"github.com/slok/go-http-metrics/middleware/std"
 )
 
 var asrKindPortMap = map[string]int{
@@ -16,9 +18,10 @@ var asrKindPortMap = map[string]int{
 	"sa_me_2.0+vgh":     8891,
 }
 
-func RegisterWebsocketHandler(router *chi.Mux) {
+func RegisterWebsocketHandler(router *chi.Mux, mdlw httpmiddleware.Middleware) {
 
 	router.Route("/websocket", func(websocketRouter chi.Router) {
+		websocketRouter.Use(std.HandlerProvider("/websocket/:asrKind/:operation", mdlw))
 		websocketRouter.HandleFunc("/{asrKind}/{operation}", func(w http.ResponseWriter, r *http.Request) {
 			asrKind := chi.URLParam(r, "asrKind")
 			port, ok := asrKindPortMap[asrKind]
