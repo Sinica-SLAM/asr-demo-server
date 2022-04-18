@@ -164,7 +164,7 @@ func (handler apiHandler) youtubeSrt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_youtube.sh %s %s", API_SCRIPT_PREFIX, info.AsrKind, info.Vid))
+	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_youtube.sh %s srt %s", API_SCRIPT_PREFIX, info.AsrKind, info.Vid))
 
 	so, err := command.StdoutPipe()
 	if err != nil {
