@@ -16,6 +16,7 @@ var asrKindPortMap = map[string]int{
 	"sa_te_1.0":         8889,
 	"sa_me_2.0+kenkone": 8890,
 	"sa_me_2.0+vgh":     8891,
+	"sa_me_2.1":         8892,
 }
 
 func RegisterWebsocketHandler(router *chi.Mux, mdlw httpmiddleware.Middleware) {
