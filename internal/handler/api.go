@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -116,7 +117,7 @@ func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	filename := fmt.Sprintf("%x.%s", md5.Sum([]byte(strings.Split(header.Filename, ".")[0])), strings.Split(header.Filename, ".")[1])
+	filename := fmt.Sprintf("%x%s", md5.Sum([]byte(header.Filename)), strings.ToLower(filepath.Ext(header.Filename)))
 	fmt.Println(filename)
 
 	file, err := os.Create(fmt.Sprintf("files/%s", filename))
