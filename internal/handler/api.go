@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bufio"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
@@ -15,6 +14,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	httpmiddleware "github.com/slok/go-http-metrics/middleware"
 	"github.com/slok/go-http-metrics/middleware/std"
 
@@ -28,6 +28,8 @@ type apiHandler struct {
 	youtubeService *youtube.Service
 }
 
+var results = make(map[string]result)
+
 func RegisterApiHandler(router *chi.Mux, youtubeService *youtube.Service, mdlw httpmiddleware.Middleware) {
 	handler := &apiHandler{
 		youtubeService: youtubeService,
@@ -38,6 +40,7 @@ func RegisterApiHandler(router *chi.Mux, youtubeService *youtube.Service, mdlw h
 		apiRouter.Post("/postRecognize", handler.postRecognize)
 		apiRouter.Post("/uploadRecognize", handler.uploadRecognize)
 		apiRouter.Post("/youtubeSrt", handler.youtubeSrt)
+		apiRouter.Get("/result/{filename}", handler.getResult)
 	})
 }
 
@@ -84,9 +87,8 @@ func (handler apiHandler) postRecognize(w http.ResponseWriter, r *http.Request) 
 // @Summary Do upload recognize
 // @Description get upload recognize result
 // @Accept multipart/form-data
-// @Produce  json
 // @Param Form formData uploadInfo true "Upload file via file field"
-// @Success 200 {array} wordalignment
+// @Success 200
 // @Failure 400
 // @Failure 500
 // @Router /uploadRecognize [post]
@@ -103,6 +105,7 @@ func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		fmt.Println(err.Error())
 		w.WriteHeader(400)
+		w.Write([]byte(err.Error()))
 		return
 	}
 	defer uploadFile.Close()
@@ -124,32 +127,53 @@ func (handler apiHandler) uploadRecognize(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		fmt.Println(err.Error())
 		w.WriteHeader(400)
+		w.Write([]byte(err.Error()))
 		return
 	}
 	defer file.Close()
 
-	io.Copy(file, uploadFile)
+	_, err = io.Copy(file, uploadFile)
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(400)
+		w.Write([]byte(err.Error()))
+		return
+	}
 
+	results[filename] = result{Done: false, Data: "辨識中...(2/3)"}
+	go handleUploadRecognize(langKind, asrKind, filename)
+
+	w.WriteHeader(200)
+	w.Write([]byte(filename))
+}
+
+func handleUploadRecognize(langKind string, asrKind string, filename string) {
 	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_upload.sh %s %s %s", SCRIPT_PREFIX, langKind, asrKind, fmt.Sprintf("/mnt/md0/asr-demo/files/%s", filename)))
-
+	fmt.Printf("%s/run_rec_upload.sh %s %s %s\n", SCRIPT_PREFIX, langKind, asrKind, fmt.Sprintf("/mnt/md0/asr-demo/files/%s", filename))
 	out, err := command.CombinedOutput()
 	if err != nil {
-		fmt.Printf("%s", err.Error())
-		w.WriteHeader(500)
+		fmt.Printf("%s\n", out)
+		fmt.Println(err.Error())
+		results[filename] = result{Done: true, Data: fmt.Sprintf("辨識失敗, %s", out)}
 		return
 	}
 
 	err = os.Remove(fmt.Sprintf("files/%s", filename))
 	if err != nil {
 		fmt.Println(err.Error())
-		w.WriteHeader(500)
-		return
 	}
 
 	fmt.Println(string(out))
 
-	w.WriteHeader(200)
-	w.Write(out)
+	var data any
+	err = json.Unmarshal(out, &data)
+	if err != nil {
+		fmt.Println(err.Error())
+		results[filename] = result{Done: true, Data: fmt.Sprintf("轉換 json 失敗, %s", err.Error())}
+		return
+	}
+	results[filename] = result{Done: true, Data: data}
+
 }
 
 func (handler apiHandler) youtubeSrt(w http.ResponseWriter, r *http.Request) {
@@ -161,53 +185,70 @@ func (handler apiHandler) youtubeSrt(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Printf("%s", err.Error())
 		w.WriteHeader(400)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
-	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_youtube.sh %s srt %s", API_SCRIPT_PREFIX, info.AsrKind, info.Vid))
+	id := uuid.New().String()
+	results[id] = result{Done: false, Data: "辨識中...(2/5)"}
+	go handler.handleYoutubeSrt(info.AsrKind, info.Vid, id)
 
-	so, err := command.StdoutPipe()
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(id))
+}
+
+func (handler apiHandler) handleYoutubeSrt(asrKind string, vid string, id string) {
+	command := exec.Command("bash", "-c", fmt.Sprintf("%s/run_rec_youtube.sh %s %s srt %s 10", API_SCRIPT_PREFIX, id, asrKind, vid))
+	out, err := command.CombinedOutput()
 	if err != nil {
-		fmt.Println(err.Error())
-		w.WriteHeader(500)
+		fmt.Printf("%s\n", out)
+		results[id] = result{Done: true, Data: fmt.Sprintf("辨識失敗, %s", out)}
 		return
 	}
+	// so, err := command.StdoutPipe()
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	w.WriteHeader(500)
+	// 	return
+	// }
 
-	scanner := bufio.NewScanner(so)
+	// scanner := bufio.NewScanner(so)
 
-	err = command.Start()
-	if err != nil {
-		fmt.Println(err.Error())
-		w.WriteHeader(500)
-		return
-	}
-	unReadFirstLine := true
-	result := ""
-	for scanner.Scan() {
-		if unReadFirstLine {
-			result = scanner.Text()
-			unReadFirstLine = false
-		}
-		fmt.Println(scanner.Text())
-		fmt.Println(scanner.Err())
-	}
+	// err = command.Start()
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	w.WriteHeader(500)
+	// 	return
+	// }
+	// unReadFirstLine := true
+	// result := ""
+	// for scanner.Scan() {
+	// 	if unReadFirstLine {
+	// 		result = scanner.Text()
+	// 		unReadFirstLine = false
+	// 	}
+	// 	fmt.Println(scanner.Text())
+	// 	fmt.Println(scanner.Err())
+	// }
 
 	srtPath := ""
 	videoPath := ""
 
-	if splitResult := strings.Split(result, " "); len(splitResult) > 1 {
+	if splitResult := strings.Split(strings.TrimSpace(string(out)), " "); len(splitResult) > 1 {
 		srtPath = splitResult[0]
 		videoPath = splitResult[1]
 	} else {
 		fmt.Println("script wrong output")
-		w.WriteHeader(http.StatusInternalServerError)
+		results[id] = result{Done: true, Data: "辨識失敗, script wrong output"}
 		return
 	}
+
+	results[vid] = result{Done: false, Data: "上傳影片至 YT...(3/5)"}
 
 	videoFile, err := os.Open(videoPath)
 	if err != nil {
 		fmt.Printf("Error opening %v: %v\n", videoPath, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		results[id] = result{Done: true, Data: "上傳失敗, Error opening video"}
 		return
 	}
 	defer videoFile.Close()
@@ -215,14 +256,18 @@ func (handler apiHandler) youtubeSrt(w http.ResponseWriter, r *http.Request) {
 	videoRes, err := handler.youtubeService.UploadVideo(path.Base(videoPath), videoFile)
 	if err != nil {
 		fmt.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		results[id] = result{Done: true, Data: fmt.Sprintf("上傳影片至 YT 失敗, %s", err.Error())}
 		return
 	}
+
+	time.Sleep(1 * time.Minute)
+
+	results[vid] = result{Done: false, Data: "上傳字幕至 YT...(4/5)"}
 
 	srtFile, err := os.Open(srtPath)
 	if err != nil {
 		fmt.Printf("Error opening %v: %v\n", srtFile, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		results[id] = result{Done: true, Data: "上傳失敗, Error opening srt"}
 		return
 	}
 	defer srtFile.Close()
@@ -230,25 +275,33 @@ func (handler apiHandler) youtubeSrt(w http.ResponseWriter, r *http.Request) {
 	_, err = handler.youtubeService.UploadCaptions(videoRes.Id, srtFile)
 	if err != nil {
 		fmt.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		results[id] = result{Done: true, Data: fmt.Sprintf("上傳字幕至 YT 失敗, %s", err.Error())}
 		return
 	}
 
-	err = os.RemoveAll(path.Dir(path.Dir(srtPath)))
+	results[id] = result{Done: true, Data: map[string]string{"vid": videoRes.Id}}
+}
+
+func (handler apiHandler) getResult(w http.ResponseWriter, r *http.Request) {
+	filename := chi.URLParam(r, "filename")
+
+	if _, ok := results[filename]; !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	b, err := json.Marshal(results[filename])
 	if err != nil {
 		fmt.Println(err.Error())
 		w.WriteHeader(500)
+		delete(results, filename)
 		return
 	}
 
-	b, err := json.Marshal(map[string]string{"vid": videoRes.Id})
-	if err != nil {
-		fmt.Println(err.Error())
-		w.WriteHeader(500)
-		return
+	if results[filename].Done {
+		delete(results, filename)
 	}
 
-	time.Sleep(1 * time.Minute)
-
+	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 }

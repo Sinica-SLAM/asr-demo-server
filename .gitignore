@@ -17,6 +17,9 @@
 *.wav
 *.raw
 *.zip
+*.mp4
+*.srt
+*.trs
 
 /server
 # General
