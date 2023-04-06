@@ -15,8 +15,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	httpmiddleware "github.com/slok/go-http-metrics/middleware"
-	"github.com/slok/go-http-metrics/middleware/std"
 
 	youtube "asr-demo-recognize/pkg/youtube"
 )
@@ -30,13 +28,12 @@ type apiHandler struct {
 
 var results = make(map[string]result)
 
-func RegisterApiHandler(router *chi.Mux, youtubeService *youtube.Service, mdlw httpmiddleware.Middleware) {
+func RegisterApiHandler(router *chi.Mux, youtubeService *youtube.Service) {
 	handler := &apiHandler{
 		youtubeService: youtubeService,
 	}
 
 	router.Route("/demo", func(apiRouter chi.Router) {
-		apiRouter.Use(std.HandlerProvider("", mdlw))
 		apiRouter.Post("/postRecognize", handler.postRecognize)
 		apiRouter.Post("/uploadRecognize", handler.uploadRecognize)
 		apiRouter.Post("/youtubeSrt", handler.youtubeSrt)
