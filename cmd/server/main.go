@@ -9,5 +9,5 @@ import (
 )
 
 func main() {
-	fx.New(fx.Provide(pkg_chi.NewRouter, youtube.NewService), fx.Invoke(handler.RegisterStaticHandler, handler.RegisterApiHandler, handler.RegisterWebsocketHandler, handler.RegisterSwaggoHandler, handler.RegisterMetricsHandler)).Run()
+	fx.New(fx.Provide(pkg_chi.NewRouter, youtube.NewService), fx.Invoke(handler.RegisterStaticHandler, handler.RegisterApiHandler, handler.RegisterWebsocketHandler, handler.RegisterSwaggoHandler)).Run()
 }
