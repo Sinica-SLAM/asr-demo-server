@@ -12,7 +12,6 @@
 └── pkg
     ├── chi (chi router)
     ├── ent (ent orm, but not used)
-    ├── middleware (middlewares)
     └── youtube (youtube api client)
 ```
 
