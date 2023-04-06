@@ -1,11 +1,12 @@
 module asr-demo-recognize
 
-go 1.18
+go 1.20
 
 require (
 	entgo.io/ent v0.9.1
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/go-chi/cors v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/slok/go-http-metrics v0.10.0
 	github.com/swaggo/http-swagger v1.1.1
@@ -28,7 +29,6 @@ require (
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
