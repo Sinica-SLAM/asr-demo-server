@@ -3,7 +3,7 @@
 package hook
 
 import (
-	"asr-demo-recognize/pkg/ent"
+	"asr-demo-server/pkg/ent"
 	"context"
 	"fmt"
 )

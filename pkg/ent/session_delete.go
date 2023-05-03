@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"asr-demo-recognize/pkg/ent/predicate"
-	"asr-demo-recognize/pkg/ent/session"
+	"asr-demo-server/pkg/ent/predicate"
+	"asr-demo-server/pkg/ent/session"
 	"context"
 	"fmt"
 

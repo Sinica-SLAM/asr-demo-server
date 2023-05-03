@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"asr-demo-recognize/pkg/ent/predicate"
-	"asr-demo-recognize/pkg/ent/segment"
+	"asr-demo-server/pkg/ent/predicate"
+	"asr-demo-server/pkg/ent/segment"
 	"context"
 	"fmt"
 

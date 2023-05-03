@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"asr-demo-recognize/pkg/ent/wordalignment"
+	"asr-demo-server/pkg/ent/wordalignment"
 	"fmt"
 	"strings"
 

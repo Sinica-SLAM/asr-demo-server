@@ -3,10 +3,10 @@
 package enttest
 
 import (
-	"asr-demo-recognize/pkg/ent"
+	"asr-demo-server/pkg/ent"
 	"context"
 	// required by schema hooks.
-	_ "asr-demo-recognize/pkg/ent/runtime"
+	_ "asr-demo-server/pkg/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
 )

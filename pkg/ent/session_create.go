@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"asr-demo-recognize/pkg/ent/segment"
-	"asr-demo-recognize/pkg/ent/session"
+	"asr-demo-server/pkg/ent/segment"
+	"asr-demo-server/pkg/ent/session"
 	"context"
 	"errors"
 	"fmt"

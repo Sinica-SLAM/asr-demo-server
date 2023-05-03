@@ -19,7 +19,7 @@ import (
 func getClient(scope []string) *http.Client {
 	ctx := context.Background()
 
-	b, err := ioutil.ReadFile("client_secret.json")
+	b, err := ioutil.ReadFile("client_secret_2.json")
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
@@ -83,7 +83,7 @@ func tokenCacheFile() (string, error) {
 	tokenCacheDir := filepath.Join(usr.HomeDir, ".credentials")
 	os.MkdirAll(tokenCacheDir, 0700)
 	return filepath.Join(tokenCacheDir,
-		url.QueryEscape("youtube-go.json")), err
+		url.QueryEscape("youtube-go-2.json")), err
 }
 
 // tokenFromFile retrieves a Token from a given file path.

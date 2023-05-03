@@ -16,7 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	youtube "asr-demo-recognize/pkg/youtube"
+	youtube "asr-demo-server/pkg/youtube"
 )
 
 const SCRIPT_PREFIX = `source ~/miniconda3/etc/profile.d/conda.sh;conda activate pkasr;bash /mnt/md0/nfs_share/PKASR/sinica_asr/demo`

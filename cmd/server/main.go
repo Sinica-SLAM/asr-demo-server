@@ -1,9 +1,9 @@
 package main
 
 import (
-	"asr-demo-recognize/internal/handler"
-	pkg_chi "asr-demo-recognize/pkg/chi"
-	"asr-demo-recognize/pkg/youtube"
+	"asr-demo-server/internal/handler"
+	pkg_chi "asr-demo-server/pkg/chi"
+	"asr-demo-server/pkg/youtube"
 
 	"go.uber.org/fx"
 )

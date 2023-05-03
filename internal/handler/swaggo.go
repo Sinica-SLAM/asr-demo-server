@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	_ "asr-demo-recognize/docs"
+	_ "asr-demo-server/docs"
 
 	"github.com/go-chi/chi/v5"
 	httpSwagger "github.com/swaggo/http-swagger"

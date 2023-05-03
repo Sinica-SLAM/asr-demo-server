@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"asr-demo-recognize/pkg/ent/predicate"
-	"asr-demo-recognize/pkg/ent/wordalignment"
+	"asr-demo-server/pkg/ent/predicate"
+	"asr-demo-server/pkg/ent/wordalignment"
 	"context"
 	"fmt"
 

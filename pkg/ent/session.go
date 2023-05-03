@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"asr-demo-recognize/pkg/ent/session"
+	"asr-demo-server/pkg/ent/session"
 	"fmt"
 	"strings"
 	"time"

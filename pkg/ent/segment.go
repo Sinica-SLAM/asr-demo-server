@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"asr-demo-recognize/pkg/ent/segment"
+	"asr-demo-server/pkg/ent/segment"
 	"fmt"
 	"strings"
 

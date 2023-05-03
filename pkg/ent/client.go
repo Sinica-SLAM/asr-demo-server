@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"log"
 
-	"asr-demo-recognize/pkg/ent/migrate"
+	"asr-demo-server/pkg/ent/migrate"
 
-	"asr-demo-recognize/pkg/ent/candidate"
-	"asr-demo-recognize/pkg/ent/segment"
-	"asr-demo-recognize/pkg/ent/session"
-	"asr-demo-recognize/pkg/ent/wordalignment"
+	"asr-demo-server/pkg/ent/candidate"
+	"asr-demo-server/pkg/ent/segment"
+	"asr-demo-server/pkg/ent/session"
+	"asr-demo-server/pkg/ent/wordalignment"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
