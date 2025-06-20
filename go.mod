@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	entgo.io/ent v0.9.1
-	github.com/go-chi/chi/v5 v5.0.8
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.1
 	github.com/google/uuid v1.3.0
 	github.com/swaggo/http-swagger v1.2.6
