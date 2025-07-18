@@ -1,6 +1,6 @@
 module asr-demo-server
 
-go 1.20
+go 1.23.0
 
 require (
 	entgo.io/ent v0.9.1
@@ -10,13 +10,12 @@ require (
 	github.com/swaggo/http-swagger v1.2.6
 	github.com/swaggo/swag v1.16.1
 	go.uber.org/fx v1.20.0
-	golang.org/x/oauth2 v0.9.0
+	golang.org/x/oauth2 v0.27.0
 	google.golang.org/api v0.128.0
 )
 
 require (
-	cloud.google.com/go/compute v1.19.3 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
